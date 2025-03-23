@@ -4,14 +4,14 @@ import os
 from openai import OpenAI
 from schemas.linkedin_schema import LINKEDIN_PROFILE_SCHEMA
 
-# Initialize OpenAI client
+# Inicializar cliente OpenAI
 openai_api_key = os.environ.get("OPENAI_API_KEY")
 client = OpenAI(api_key=openai_api_key)
 
 
 def parse_linkedin_profile(markdown_content: str):
-    """Extract structured data from LinkedIn profile HTML content using OpenAI API"""
-    logging.info("Starting LinkedIn profile structured output extraction")
+    """Extraer datos estructurados del contenido HTML del perfil de LinkedIn utilizando la API de OpenAI"""
+    logging.info("Iniciando extracción de datos estructurados del perfil de LinkedIn")
     response = client.responses.create(
         model="gpt-4o-mini",
         input=[
@@ -20,7 +20,7 @@ def parse_linkedin_profile(markdown_content: str):
                 "content": [
                     {
                         "type": "input_text",
-                        "text": "You're an expert at looking at a person's LinkedIn page and extract out relevant information.",
+                        "text": "Eres un experto en examinar la página de LinkedIn de una persona y extraer información relevante.",
                     }
                 ],
             },

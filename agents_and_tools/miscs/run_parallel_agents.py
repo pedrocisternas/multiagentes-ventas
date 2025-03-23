@@ -13,27 +13,27 @@ async def run_tasks_in_parallel(
     result_handler: Callable[[InputType, ResultType], None] = None,
 ) -> List[ResultType]:
     """
-    Run multiple tasks in parallel using asyncio.
+    Ejecuta múltiples tareas en paralelo usando asyncio.
 
     Args:
-        process_function: The async function to run for each input
-        inputs: List of input items to process
-        show_progress: Whether to show progress messages
-        result_handler: Optional callback to handle each result as it completes
+        process_function: La función asíncrona que se ejecutará para cada entrada
+        inputs: Lista de elementos de entrada a procesar
+        show_progress: Indica si se muestran mensajes de progreso
+        result_handler: Callback opcional para manejar cada resultado cuando se completa
 
     Returns:
-        List of results from all processed inputs
+        Lista de resultados de todas las entradas procesadas
     """
     if show_progress:
-        print(f"Processing {len(inputs)} items in parallel...\n")
+        print(f"Procesando {len(inputs)} elementos en paralelo...\n")
 
-    # Create tasks for each input
+    # Crear tareas para cada entrada
     tasks = [process_function(input_item) for input_item in inputs]
 
-    # Process all tasks in parallel
+    # Procesar todas las tareas en paralelo
     results = await asyncio.gather(*tasks)
 
-    # Handle results if a handler is provided
+    # Manejar resultados si se proporciona un manejador
     if result_handler:
         for input_item, result in zip(inputs, results):
             result_handler(input_item, result)
@@ -48,16 +48,16 @@ async def run_dict_tasks_in_parallel(
     result_handler: Callable[[Dict[str, Any], ResultType], None] = None,
 ) -> List[ResultType]:
     """
-    Run multiple tasks with dictionary inputs in parallel using asyncio.
+    Ejecuta múltiples tareas con entradas de diccionario en paralelo usando asyncio.
 
     Args:
-        process_function: The async function to run for each input dictionary
-        input_dicts: List of input dictionaries to process
-        show_progress: Whether to show progress messages
-        result_handler: Optional callback to handle each result as it completes
+        process_function: La función asíncrona que se ejecutará para cada diccionario de entrada
+        input_dicts: Lista de diccionarios de entrada a procesar
+        show_progress: Indica si se muestran mensajes de progreso
+        result_handler: Callback opcional para manejar cada resultado cuando se completa
 
     Returns:
-        List of results from all processed inputs
+        Lista de resultados de todas las entradas procesadas
     """
     return await run_tasks_in_parallel(
         process_function=process_function,

@@ -6,5 +6,6 @@ from typing import Any, Dict, Optional
 class SalesContext:
     name: Optional[str]
     linkedin_url: Optional[str]
-    profile_data: Optional[Dict[str, Any]]
-    email_draft: Optional[str]
+    description: Optional[str] = None
+    profile_data: Optional[Dict[str, Any]] = None
+    email_draft: Optional[str] = None

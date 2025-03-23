@@ -19,10 +19,10 @@ from miscs.run_parallel_agents import run_dict_tasks_in_parallel
 
 
 async def on_handoff_callback(ctx: RunContextWrapper[SalesContext]):
-    print("\n🔄 Handoff just happened")
+    print("\n🔄 Handoff ocurrió")
 
 
-# AGENTs
+# AGENTEs
 sales_team_lead = Agent[SalesContext](
     name="Sales Team Lead",
     instructions=prompt_with_handoff_instructions(SALES_TEAM_LEAD_INSTRUCTIONS),
@@ -36,7 +36,7 @@ sales_development_rep = Agent[SalesContext](
     model="gpt-4o",
 )
 
-# New agent using Tavily search instead of LinkedIn scraping
+# Nuevo agente usando búsqueda Tavily en lugar de raspado de LinkedIn
 sales_development_rep_tavily = Agent[SalesContext](
     name="Sales Development Rep with Tavily",
     instructions=prompt_with_handoff_instructions(SALES_DEVELOPMENT_REP_TAVILY_INSTRUCTIONS),
@@ -51,24 +51,24 @@ cold_email_specialist = Agent[SalesContext](
     model="gpt-4o",
 )
 
-# Original handoff configuration using LinkedIn scraper
+# Configuración original de handoff usando raspador de LinkedIn
 # sales_team_lead.handoffs = [
 #     handoff(agent=sales_development_rep, on_handoff=on_handoff_callback),
 #     handoff(agent=cold_email_specialist, on_handoff=on_handoff_callback),
 # ]
 
-# New handoff configuration using Tavily research
+# Nueva configuración de handoff usando investigación Tavily
 sales_team_lead.handoffs = [
     handoff(agent=sales_development_rep_tavily, on_handoff=on_handoff_callback),
     handoff(agent=cold_email_specialist, on_handoff=on_handoff_callback),
 ]
 
-# Original handoff for the LinkedIn-based agent
+# Handoff original para el agente basado en LinkedIn
 sales_development_rep.handoffs = [
     handoff(agent=sales_team_lead, on_handoff=on_handoff_callback)
 ]
 
-# Handoff for the new Tavily-based agent
+# Handoff para el nuevo agente basado en Tavily
 sales_development_rep_tavily.handoffs = [
     handoff(agent=sales_team_lead, on_handoff=on_handoff_callback)
 ]
@@ -79,22 +79,26 @@ cold_email_specialist.handoffs = [
 
 
 async def process_sales_lead(lead: dict) -> RunResult:
-    """Process a sales lead through the multi-agent workflow"""
+    """Procesar un lead de ventas a través del flujo de trabajo multi-agente"""
     name = lead["name"]
     linkedin_url = lead["linkedin_url"]
+    description = lead.get("description", "")
 
     context: SalesContext = {
         "name": name,
         "linkedin_url": linkedin_url,
+        "description": description,
         "profile_data": None,
         "email_draft": None,
     }
 
-    print(f"\n🔍 Processing lead: {name} ({linkedin_url})")
+    print(f"\n🔍 Procesando lead: {name} ({linkedin_url})")
+    if description:
+        print(f"   📝 Descripción: {description}")
 
     final_result = await Runner.run(
         starting_agent=sales_team_lead,
-        input=f"We have a new lead: {name} ({linkedin_url}). Please coordinate the process to research this lead and create a personalized outreach email.",
+        input=f"Tenemos un nuevo lead: {name} ({linkedin_url}). Por favor, coordina el proceso para investigar este lead y crear un correo electrónico de prospección personalizado.",
         context=context,
         max_turns=15,
     )
@@ -103,17 +107,17 @@ async def process_sales_lead(lead: dict) -> RunResult:
 
 
 def display_lead_result(lead: dict, final_result: RunResult):
-    print("Final results:")
+    print("Resultados finales:")
     print(f"""
     Input: {final_result.input}
-    Final message from agent: {final_result.final_output}
-    Last agent: {final_result.last_agent.name}
+    Mensaje final del agente: {final_result.final_output}
+    Último agente: {final_result.last_agent.name}
     """)
 
 
 async def process_multiple_leads_in_parallel():
-    """Process a list of predefined leads in parallel"""
-    print("\n===== Sales Outreach Multi-Agent System =====")
+    """Procesar una lista de leads predefinidos en paralelo"""
+    print("\n===== Sistema Multi-Agente de Prospección de Ventas =====")
 
     results = await run_dict_tasks_in_parallel(
         process_function=process_sales_lead,
@@ -126,8 +130,8 @@ async def process_multiple_leads_in_parallel():
 
 
 def main():
-    """Main entry point for the application"""
-    print("Starting Sales Outreach Multi-Agent System...")
+    """Punto de entrada principal para la aplicación"""
+    print("Iniciando Sistema Multi-Agente de Prospección de Ventas...")
     asyncio.run(process_multiple_leads_in_parallel())
 
 

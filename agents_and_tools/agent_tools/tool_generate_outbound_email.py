@@ -17,39 +17,39 @@ client = OpenAI(api_key=openai_api_key)
 def generate_email(
     wrapper: RunContextWrapper[SalesContext],
 ) -> str:
-    """Generate a personalized outbound sales email based on LinkedIn profile data"""
+    """Generar un correo electrónico de ventas personalizado basado en los datos del perfil de LinkedIn"""
 
     if not wrapper.context.get("profile_data"):
-        return "Error: No LinkedIn profile data available. Please extract profile data first."
+        return "Error: No hay datos de perfil de LinkedIn disponibles. Por favor, extraiga los datos del perfil primero."
 
-    system_prompt = "You're an expert at writing personalized outbound sales emails. Write a concise, persuasive email that connects with the prospect's background and interests."
+    system_prompt = "Eres un experto en escribir correos electrónicos de ventas personalizados. Escribe un correo electrónico conciso y persuasivo que conecte con los antecedentes e intereses del prospecto."
 
     prompt_details = f"""
-    RECIPIENT INFORMATION:
+    INFORMACIÓN DEL DESTINATARIO:
 
     {wrapper.context["name"]}
     
     {wrapper.context["profile_data"]}
     
     
-    EMAIL DETAILS:
-    - Sender Name: Pedro Cisternas
-    - Sender Company: C1DO1
+    DETALLES DEL CORREO ELECTRÓNICO:
+    - Nombre del Remitente: Pedro Cisternas
+    - Empresa del Remitente: Ficticia Inc
     
-    COMPANY CONTEXT: C1DO1 is an innovative SaaS B2B platform that transforms practical skills training by enabling students to receive asynchronous, multimedia feedback on their performance videos. This approach allows institutions to scale teaching efficiently while enhancing the quality of skill acquisition in fields such as medicine, nursing, culinary arts, and engineering. Our platform specializes in:
+    CONTEXTO DE LA EMPRESA: Ficticia Inc es una empresa líder en soluciones de inteligencia artificial que está revolucionando la forma en que las empresas analizan y utilizan sus datos. Nuestra tecnología avanzada permite a las organizaciones automatizar procesos complejos, mejorar la toma de decisiones y descubrir nuevas oportunidades de negocio. Nos especializamos en:
     
-    1. Asynchronous, multimedia feedback on practice videos  
-    2. Scalable training solutions for hands-on skills  
-    3. Seamless integration with existing Learning Management Systems (LMS) or as a standalone LMS  
-    4. Advanced analytics and AI-driven insights for continuous improvement
+    1. Análisis predictivo impulsado por IA
+    2. Automatización de procesos empresariales
+    3. Integración de IA en sistemas existentes para optimizar operaciones
+    4. Creación de sistemas multi-agente para automatizar procesos de ventas y marketing
 
     
-    Guidelines:
-    - Keep the email concise (1 paragraph)
-    - Write like Josh Braun (shine a light on a problem that the prospect might not know)
-    - No jargons, no hard pitch, just pique interest
-    - Personalize based on recipient's background, but don't be creepy
-    - Focus on sparking curiosity rather than selling
+    Directrices:
+    - Mantén el correo electrónico conciso (1 párrafo)
+    - Escribe como Josh Braun (ilumina un problema que el prospecto podría no conocer)
+    - Sin jergas, sin pitch duro, solo despierta interés
+    - Personaliza según los antecedentes del destinatario, pero sin ser invasivo
+    - Concéntrate en despertar curiosidad en lugar de vender
     """
 
     response = client.responses.create(
@@ -75,7 +75,7 @@ def generate_email(
 
     generated_email = response.output_text
 
-    # Update the context with the generated email
+    # Actualiza el contexto con el correo electrónico generado
     wrapper.context["email_draft"] = generated_email
 
     return generated_email

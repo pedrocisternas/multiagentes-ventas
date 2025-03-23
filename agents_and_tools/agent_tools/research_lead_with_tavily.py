@@ -8,14 +8,14 @@ from dotenv import load_dotenv
 from models.sales import SalesContext
 from agent_tools.tavily_search import search_tavily
 
-# Configure logging
+# Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Load environment variables
+# Cargar variables de entorno
 load_dotenv()
 
-# Initialize OpenAI client
+# Inicializar cliente OpenAI
 openai_api_key = os.environ.get("OPENAI_API_KEY")
 client = OpenAI(api_key=openai_api_key)
 
@@ -24,78 +24,93 @@ client = OpenAI(api_key=openai_api_key)
 async def research_lead_with_tavily(
     wrapper: RunContextWrapper[SalesContext], name: str, linkedin_url: str = None
 ) -> Dict[str, Any]:
-    """Research a lead using Tavily web search and format the results similar to a LinkedIn profile"""
-    print(f"Starting web research for lead: {name}")
-    logger.info(f"Researching lead: {name} (LinkedIn URL: {linkedin_url})")
+    """Investigar un lead utilizando la búsqueda web de Tavily y formatear los resultados similar a un perfil de LinkedIn"""
+    description = wrapper.context.get("description", "")
+    print(f"Iniciando investigación web para lead: {name}")
+    logger.info(f"Investigando lead: {name} (LinkedIn URL: {linkedin_url})")
+    if description:
+        logger.info(f"Descripción del lead: {description}")
     
-    # First, create search queries to gather information about the person
-    search_queries = [
-        f"{name} professional background",
-        f"{name} current job position",
-        f"{name} career history",
-        f"{name} education background",
-        f"{name} professional interests"
-    ]
+    # Primero, crear consultas de búsqueda para recopilar información sobre la persona
+    search_queries = []
     
-    # Extract domain from LinkedIn URL if available for additional context
+    # Si tenemos una descripción, usarla para consultas más precisas
+    if description:
+        search_queries = [
+            f"{name} {description}",
+            f"{name} {description} background",
+            f"{name} {description} experience",
+            f"{name} {description} education"
+        ]
+    else:
+        # Consultas genéricas si no hay descripción
+        search_queries = [
+            f"{name} professional background",
+            f"{name} current job position",
+            f"{name} career history",
+            f"{name} education background",
+            f"{name} professional interests"
+        ]
+    
+    # Extraer dominio de LinkedIn URL si está disponible para contexto adicional
     domain = None
     if linkedin_url:
         parts = linkedin_url.split("/")
         if len(parts) > 2:
-            # Extract username from LinkedIn URL
+            # Extraer nombre de usuario de la URL de LinkedIn
             username = parts[-1] if parts[-1] else parts[-2]
             if username:
                 search_queries.append(f"{name} {username} professional background")
     
-    # Collect search results
-    print(f"Searching web for information about {name}...")
+    # Recopilar resultados de búsqueda
+    print(f"Buscando en la web información sobre {name}...")
     combined_results = ""
     for query in search_queries:
         results = await search_tavily(query=query, max_results=3)
         combined_results += f"\n\n{results}"
     
-    print("✅ Web search completed")
+    print("✅ Búsqueda web completada")
     
-    # Use OpenAI to extract structured information from search results
+    # Usar OpenAI para extraer información estructurada de los resultados de búsqueda
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {
                     "role": "system",
-                    "content": """You are an expert at extracting professional information about people from web search results.
-                    Extract information about the person's career, education, interests, and professional activities.
-                    Format the information to match a LinkedIn profile structure.
-                    Please return the information as a JSON object with these exact fields at the top level (do NOT nest them under a 'profile' key):
-                    - current_role: their current job title
-                    - company: their current company
-                    - industry: their industry
-                    - experience: array of objects with title, company, and duration fields
-                    - education: array of strings
-                    - interests: array of strings
+                    "content": """Eres un experto en extraer información profesional sobre personas a partir de resultados de búsqueda web.
+                    Extrae información sobre la carrera, educación, intereses y actividades profesionales de la persona.
+                    Formatea la información para que coincida con la estructura de un perfil de LinkedIn.
+                    Por favor, devuelve la información como un objeto JSON con estos campos exactos en el nivel superior (NO los anides bajo una clave 'profile'):
+                    - current_role: su cargo actual
+                    - company: su empresa actual
+                    - industry: su industria
+                    - experience: array de objetos con campos title, company y duration
+                    - education: array de strings
+                    - interests: array de strings
                     - recent_activity: string
                     
-                    If information is not available, make a reasonable guess based on context but indicate uncertainty."""
+                    Si la información no está disponible, haz una suposición razonable basada en el contexto pero indica incertidumbre."""
                 },
                 {
                     "role": "user",
-                    "content": f"Here are web search results about {name}. Extract professional information and return it as a JSON object formatted like a LinkedIn profile with the exact fields specified:\n\n{combined_results}"
+                    "content": f"Aquí están los resultados de búsqueda web sobre {name}. Extrae información profesional y devuélvela como un objeto JSON formateado como un perfil de LinkedIn con los campos exactos especificados:\n\n{combined_results}"
                 }
             ],
             response_format={"type": "json_object"},
             temperature=0.7
         )
         
-        # Parse the structured data from the response
+        # Analizar los datos estructurados de la respuesta
         structured_data = json.loads(response.choices[0].message.content)
         
-        # Check if the data is nested under a 'profile' key
+        # Comprobar si los datos están anidados bajo una clave 'profile'
         if 'profile' in structured_data and isinstance(structured_data['profile'], dict):
             profile_data = structured_data['profile']
         else:
             profile_data = structured_data
         
-        # Ensure the response matches the LinkedIn schema format, with proper mapping
+        # Asegurar que la respuesta coincida con el formato del esquema de LinkedIn, con el mapeo adecuado
         formatted_profile = {
             "current_role": profile_data.get("current_role") or profile_data.get("headline") or "Unknown",
             "company": profile_data.get("company") or (profile_data.get("experience", [{}])[0].get("company") if profile_data.get("experience") else "Unknown"),
@@ -103,7 +118,7 @@ async def research_lead_with_tavily(
             "experience": []
         }
         
-        # Handle experience with proper format
+        # Manejar la experiencia con el formato adecuado
         if "experience" in profile_data and isinstance(profile_data["experience"], list):
             for exp in profile_data["experience"]:
                 if isinstance(exp, dict):
@@ -117,7 +132,7 @@ async def research_lead_with_tavily(
         if not formatted_profile["experience"]:
             formatted_profile["experience"] = [{"title": "Unknown", "company": "Unknown", "duration": "Unknown"}]
         
-        # Handle education
+        # Manejar la educación
         if "education" in profile_data and isinstance(profile_data["education"], list):
             formatted_profile["education"] = []
             for edu in profile_data["education"]:
@@ -129,32 +144,32 @@ async def research_lead_with_tavily(
         else:
             formatted_profile["education"] = ["Unknown"]
         
-        # Handle interests
+        # Manejar intereses
         formatted_profile["interests"] = profile_data.get("interests", ["Unknown"])
         if not isinstance(formatted_profile["interests"], list):
             formatted_profile["interests"] = ["Unknown"]
         
-        # Handle recent activity
-        formatted_profile["recent_activity"] = profile_data.get("recent_activity") or "No recent activity information available"
+        # Manejar actividad reciente
+        formatted_profile["recent_activity"] = profile_data.get("recent_activity") or "No hay información de actividad reciente disponible"
         
-        # Print a summary of the information found
-        print("\n📋 Lead Profile Summary:")
-        print(f"  • Current role: {formatted_profile['current_role']} at {formatted_profile['company']}")
-        print(f"  • Industry: {formatted_profile['industry']}")
+        # Imprimir un resumen de la información encontrada
+        print("\n📋 Resumen del Perfil del Lead:")
+        print(f"  • Rol actual: {formatted_profile['current_role']} en {formatted_profile['company']}")
+        print(f"  • Industria: {formatted_profile['industry']}")
         if formatted_profile['education'] and formatted_profile['education'][0] != "Unknown":
-            print(f"  • Education: {formatted_profile['education'][0]}")
+            print(f"  • Educación: {formatted_profile['education'][0]}")
         if formatted_profile['interests'] and formatted_profile['interests'][0] != "Unknown":
-            print(f"  • Key interests: {', '.join(formatted_profile['interests'][:3])}")
+            print(f"  • Intereses clave: {', '.join(formatted_profile['interests'][:3])}")
         
-        # Update the context with the structured profile data
+        # Actualizar el contexto con los datos de perfil estructurados
         wrapper.context["profile_data"] = formatted_profile
         
-        print("✅ Lead research completed")
+        print("✅ Investigación del lead completada")
         return formatted_profile
         
     except Exception as e:
-        logger.error(f"Error processing web search results: {str(e)}")
-        # Return fallback data that matches the required schema
+        logger.error(f"Error al procesar los resultados de búsqueda web: {str(e)}")
+        # Devolver datos de respaldo que coincidan con el esquema requerido
         fallback_data = {
             "current_role": "Unknown",
             "company": "Unknown",
@@ -162,7 +177,7 @@ async def research_lead_with_tavily(
             "experience": [{"title": "Unknown", "company": "Unknown", "duration": "Unknown"}],
             "education": ["Unknown"],
             "interests": ["Unknown"],
-            "recent_activity": f"Error extracting profile information. Error: {str(e)}"
+            "recent_activity": f"Error al extraer información del perfil. Error: {str(e)}"
         }
         wrapper.context["profile_data"] = fallback_data
         return fallback_data

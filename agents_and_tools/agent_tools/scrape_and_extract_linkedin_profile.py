@@ -15,8 +15,8 @@ scraper_api_key = os.environ.get("SCRAPER_API_KEY")
 def extract_linkedin_profile(
     wrapper: RunContextWrapper[SalesContext], linkedin_url: str
 ) -> Dict[str, Any]:
-    """Extract profile data from a LinkedIn URL"""
-    print("Start scraping & extracting LinkedIn")
+    """Extraer datos de perfil de una URL de LinkedIn"""
+    print("Iniciando raspado y extracción de LinkedIn")
 
     payload = {
         "api_key": scraper_api_key,
@@ -30,12 +30,12 @@ def extract_linkedin_profile(
 
     page_markdown = response.text
 
-    # Extract the user's profile from the response
+    # Extraer el perfil del usuario de la respuesta
     profile_data = parse_linkedin_profile(page_markdown)
 
-    # Update the context with the extracted profile data
+    # Actualizar el contexto con los datos del perfil extraído
     wrapper.context["profile_data"] = profile_data
 
-    print("Finished LinkedIn extration.")
+    print("Extracción de LinkedIn finalizada.")
 
     return profile_data
