@@ -1,4 +1,7 @@
+import os
 import asyncio
+import json
+from datetime import datetime
 
 from models.sales import SalesContext
 from prompts.sales import (
@@ -16,6 +19,7 @@ from agent_tools.research_lead_with_tavily import research_lead_with_tavily
 from agent_tools.tool_generate_outbound_email import generate_email
 from data.sales_leads import leads
 from miscs.run_parallel_agents import run_dict_tasks_in_parallel
+from miscs.reporting import generate_lead_report
 
 
 async def on_handoff_callback(ctx: RunContextWrapper[SalesContext]):
@@ -83,11 +87,13 @@ async def process_sales_lead(lead: dict) -> RunResult:
     name = lead["name"]
     linkedin_url = lead["linkedin_url"]
     description = lead.get("description", "")
+    email = lead.get("email", "")
 
     context: SalesContext = {
         "name": name,
         "linkedin_url": linkedin_url,
         "description": description,
+        "email": email,
         "profile_data": None,
         "email_draft": None,
     }
@@ -95,6 +101,8 @@ async def process_sales_lead(lead: dict) -> RunResult:
     print(f"\n🔍 Procesando lead: {name} ({linkedin_url})")
     if description:
         print(f"   📝 Descripción: {description}")
+    if email:
+        print(f"   ✉️ Email: {email}")
 
     final_result = await Runner.run(
         starting_agent=sales_team_lead,
@@ -125,7 +133,10 @@ async def process_multiple_leads_in_parallel():
         show_progress=True,
         result_handler=display_lead_result,
     )
-
+    
+    # Generar reporte de leads
+    report_file = generate_lead_report(results, leads)
+    
     return results
 
 

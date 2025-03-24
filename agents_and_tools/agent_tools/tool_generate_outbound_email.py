@@ -34,14 +34,14 @@ def generate_email(
     
     DETALLES DEL CORREO ELECTRÓNICO:
     - Nombre del Remitente: Pedro Cisternas
-    - Empresa del Remitente: Ficticia Inc
+    - Empresa del Remitente: Gimnasio Inc
     
-    CONTEXTO DE LA EMPRESA: Ficticia Inc es una empresa líder en soluciones de inteligencia artificial que está revolucionando la forma en que las empresas analizan y utilizan sus datos. Nuestra tecnología avanzada permite a las organizaciones automatizar procesos complejos, mejorar la toma de decisiones y descubrir nuevas oportunidades de negocio. Nos especializamos en:
+    CONTEXTO DE LA EMPRESA: Gimnasio Inc es un gimnasio boutique con entrenamientos personalizados para deportistas. Nos enfocamos en ofrecer programas de entrenamiento adaptados a las necesidades individuales de cada cliente, ayudándolos a alcanzar sus objetivos de fitness de manera eficiente y segura. Nos especializamos en:
     
-    1. Análisis predictivo impulsado por IA
-    2. Automatización de procesos empresariales
-    3. Integración de IA en sistemas existentes para optimizar operaciones
-    4. Creación de sistemas multi-agente para automatizar procesos de ventas y marketing
+    1. Entrenamiento personalizado
+    2. Evaluaciones físicas detalladas
+    3. Programas de nutrición y bienestar
+    4. Clases grupales exclusivas para mejorar el rendimiento
 
     
     Directrices:
